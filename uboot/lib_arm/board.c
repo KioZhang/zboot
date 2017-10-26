@@ -49,6 +49,7 @@
 #include <nand.h>
 #include <onenand_uboot.h>
 #include <mmc.h>
+#include <s3c2410.h>	//kiozhang for led
 
 #ifdef CONFIG_BITBANGMII
 #include <miiphy.h>
@@ -86,7 +87,7 @@ extern void rtl8019_get_enetaddr (uchar * addr);
 #include <i2c.h>
 #endif
 
-
+#if 0
 /************************************************************************
  * Coloured LED functionality
  ************************************************************************
@@ -110,6 +111,7 @@ void inline __blue_LED_on(void) {}
 void blue_LED_on(void) __attribute__((weak, alias("__blue_LED_on")));
 void inline __blue_LED_off(void) {}
 void blue_LED_off(void) __attribute__((weak, alias("__blue_LED_off")));
+#endif
 
 /************************************************************************
  * Init Utilities							*
@@ -135,7 +137,13 @@ static int init_baudrate (void)
 
 static int display_banner (void)
 {
-	printf ("\n\n%s\n\n", version_string);
+#if defined(CONFIG_MINI2440_LED)
+	struct s3c24x0_gpio *const gpio = s3c24x0_get_base_gpio();
+	gpio->GPBDAT = 0x101; //kio
+#endif
+	printf("\n\n%s\n\n", version_string);
+	printf("modified by kiozhang(zhangyu1288@aliyun.com)\n");
+	printf("Love Linux Forever!!!\n\n")
 	debug ("U-Boot code: %08lX -> %08lX  BSS: -> %08lX\n",
 	       _armboot_start, _bss_start, _bss_end);
 #ifdef CONFIG_MODEM_SUPPORT
@@ -273,6 +281,9 @@ void start_armboot (void)
 	unsigned long addr;
 #endif
 
+#if defined(CONFIG_MINI2440_LED)
+	struct s3c24x0_gpio *const gpio = s3c24x0_get_base_gpio();
+#endif
 	/* Pointer is writable since we allocated a register for it */
 	gd = (gd_t*)(_armboot_start - CONFIG_SYS_MALLOC_LEN - sizeof(gd_t));
 	/* compiler optimization barrier needed for GCC >= 3.4 */
@@ -433,6 +444,15 @@ extern void davinci_eth_set_mac_addr (const u_int8_t *addr);
 	debug ("Reset Ethernet PHY\n");
 	reset_phy();
 #endif
+#endif
+#if defined(CONFIG_MINI2440_LED)
+	gpio->GPBDAT = 0x0; //kio
+#endif
+
+#if defined(CONFIG_CFB_CONSOLE)
+	printf("%s\n", version_string);
+	printf("modified by kiozhang(zhangyu1288@aliyun.com)\n");
+	printf("Love Linux Forever!!\n");
 #endif
 	/* main_loop() can return to retry autoboot, if so just run it again. */
 	for (;;) {
